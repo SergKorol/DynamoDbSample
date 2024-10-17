@@ -1,0 +1,34 @@
+﻿version: '3.8'  # Specify the version of docker-compose
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./docker/dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+    networks:
+      - dynamo-network
+
+  dynamodbsample:
+    image: dynamodbsample
+    container_name: dynamodb-api
+    depends_on:
+      - dynamodb-local
+    build:
+      context: .
+      dockerfile: DynamoDbSample/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+    ports:
+      - "8080:80"
+    networks:
+      - dynamo-network
+
+networks:
+  dynamo-network:
+    driver: bridge

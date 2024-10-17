@@ -1,0 +1,6 @@
+@DynamoDbSample_HostAddress = http://localhost:5029
+
+GET {{DynamoDbSample_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
