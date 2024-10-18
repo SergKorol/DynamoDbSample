@@ -1,36 +1,33 @@
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
-using System;
-using System.Threading.Tasks;
+
+namespace DynamoDbSample.Repository;
 
 public class BaseRepository
 {
-    private readonly IAmazonDynamoDB _amazonDynamoDB;
+    private readonly IAmazonDynamoDB _amazonDynamoDb;
+    private readonly ILogger<BaseRepository> _logger;
 
-    // Inject the IAmazonDynamoDB client via the constructor
-    public BaseRepository(IAmazonDynamoDB amazonDynamoDB)
+    protected BaseRepository(IAmazonDynamoDB amazonDynamoDb, ILogger<BaseRepository> logger)
     {
-        _amazonDynamoDB = amazonDynamoDB;
+        _amazonDynamoDb = amazonDynamoDb;
+        _logger = logger;
     }
 
-    // Method to create the table if it doesn't exist
     protected async Task CreateTableIfNotExists(string tableName)
     {
         try
         {
-            // Describe the table. If it exists, it will not throw an exception.
-            var tableResponse = await _amazonDynamoDB.DescribeTableAsync(tableName);
+            var tableResponse = await _amazonDynamoDb.DescribeTableAsync(tableName);
             if (tableResponse.Table.TableStatus != TableStatus.ACTIVE)
             {
-                // Optionally handle the case where the table exists but is not active
-                Console.WriteLine("Table exists but is not active yet.");
+                _logger.LogInformation("Creating table {TableName}", tableName);
             }
         }
         catch (ResourceNotFoundException)
         {
-            // If the table does not exist, create it.
             var request = GetCreateTableRequest(tableName);
-            await _amazonDynamoDB.CreateTableAsync(request);
+            await _amazonDynamoDb.CreateTableAsync(request);
         }
     }
 
@@ -41,11 +38,11 @@ public class BaseRepository
             TableName = tableName,
             AttributeDefinitions = new List<AttributeDefinition>
             {
-                new AttributeDefinition("Id", ScalarAttributeType.S)
+                new("Id", ScalarAttributeType.S)
             },
             KeySchema = new List<KeySchemaElement>
             {
-                new KeySchemaElement("Id", KeyType.HASH)
+                new("Id", KeyType.HASH)
             },
             ProvisionedThroughput = new ProvisionedThroughput
             {

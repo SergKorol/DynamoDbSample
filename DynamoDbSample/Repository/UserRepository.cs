@@ -6,13 +6,15 @@ namespace DynamoDbSample.Repository;
 
 public class UserRepository: BaseRepository ,IUserRepository
 {
+    private readonly ILogger<UserRepository> _logger;
     private readonly IDynamoDBContext _context;
-    
-    public UserRepository(IAmazonDynamoDB amazonDynamoDb, IDynamoDBContext context)
-        : base(amazonDynamoDb)
+
+    public UserRepository(IAmazonDynamoDB amazonDynamoDb, IDynamoDBContext context, ILogger<UserRepository> logger)
+        : base(amazonDynamoDb, logger)
     {
+        _logger = logger;
         _context = context;
-        CreateTableIfNotExists("Users").GetAwaiter().GetResult(); // Initialize table once during construction
+        CreateTableIfNotExists("Users").GetAwaiter().GetResult();
     }
     
     public async Task<IEnumerable<User>> GetAllUsersAsync()
@@ -51,6 +53,7 @@ public class UserRepository: BaseRepository ,IUserRepository
         var existingUser = await GetUserByIdAsync(user.Id);
         if (existingUser == null)
         {
+            _logger.LogInformation("User with id: {UserId} not found", user.Id);
             return false;
         }
 
@@ -63,6 +66,7 @@ public class UserRepository: BaseRepository ,IUserRepository
         var existingUser = await GetUserByIdAsync(id);
         if (existingUser == null)
         {
+            _logger.LogInformation("User with id: {UserId} not found", id);
             return false;
         }
 
